@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AromaGest — Ventas</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0c0c0c;--surface:#161616;--surface2:#1e1e1e;--surface3:#242424;
+  --border:#2c2c2c;--accent:#c8f04a;--accent2:#4af0c8;--danger:#f04a4a;
+  --warn:#f0b84a;--text:#e8e8e8;--muted:#5a5a5a;--muted2:#888;
+  --radius:8px;--radius-lg:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;font-size:13px;min-height:100vh;}
+
+/* LOADING */
+#loading-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:16px;
+  background:radial-gradient(ellipse at 20% 50%,#1a2a0a 0%,transparent 60%),var(--bg);}
+.loading-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:26px;}
+.loading-logo span{color:var(--accent);}
+.loading-bar{width:180px;height:2px;background:var(--border);border-radius:2px;overflow:hidden;}
+.loading-bar-inner{height:100%;background:var(--accent);animation:loadbar 1.5s ease-in-out infinite;}
+@keyframes loadbar{0%{width:0;margin-left:0}50%{width:60%;margin-left:20%}100%{width:0;margin-left:100%}}
+.loading-text{font-size:11px;color:var(--muted2);}
+
+/* LOGIN */
+#login-screen{display:none;align-items:center;justify-content:center;min-height:100vh;padding:20px;
+  background:radial-gradient(ellipse at 20% 50%,#1a2a0a 0%,transparent 60%),var(--bg);}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:36px;width:100%;max-width:360px;}
+.login-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:26px;text-align:center;margin-bottom:4px;}
+.login-logo span{color:var(--accent);}
+.login-sub{text-align:center;color:var(--muted2);font-size:11px;margin-bottom:28px;}
+.login-field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;}
+.login-field label{font-size:10px;color:var(--muted2);text-transform:uppercase;letter-spacing:.6px;}
+.login-field input{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Mono',monospace;font-size:13px;padding:10px 12px;width:100%;}
+.login-field input:focus{outline:none;border-color:var(--accent);}
+.login-pwd-row{position:relative;display:flex;align-items:center;}
+.login-pwd-row input{padding-right:40px;width:100%;}
+.login-pwd-toggle{position:absolute;right:10px;background:none;border:none;color:var(--muted2);cursor:pointer;font-size:15px;padding:4px;}
+.login-pwd-toggle:hover{color:var(--accent);}
+.login-error{color:var(--danger);font-size:11px;margin-top:6px;min-height:16px;}
+
+/* APP */
+#app{display:none;flex-direction:column;min-height:100vh;}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;display:flex;align-items:center;justify-content:space-between;height:50px;position:sticky;top:0;z-index:100;}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;}
+.logo span{color:var(--accent);}
+.logo-sub{font-size:10px;color:var(--accent2);font-family:'DM Mono',monospace;}
+.user-chip{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted2);}
+.btn-logout{background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;font-family:'DM Mono',monospace;padding:4px 8px;border-radius:var(--radius);}
+.btn-logout:hover{color:var(--danger);}
+
+nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;}
+nav::-webkit-scrollbar{display:none;}
+nav button{background:none;border:none;color:var(--muted2);font-family:'DM Mono',monospace;font-size:11px;padding:10px 12px;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .15s;}
+nav button:hover{color:var(--text);}
+nav button.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+main{padding:14px 16px;width:100%;max-width:100%;}
+.view{display:none;}
+.view.active{display:block;animation:fadeIn .2s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:12px;}
+.panel-title{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:10px;}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-bottom:14px;}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;}
+.stat-val{font-family:'Syne',sans-serif;font-size:clamp(18px,4vw,28px);font-weight:800;line-height:1;margin-bottom:3px;word-break:break-all;}
+.stat-label{color:var(--muted2);font-size:10px;}
+.c-green{color:var(--accent);}.c-blue{color:var(--accent2);}.c-red{color:var(--danger);}.c-yellow{color:var(--warn);}
+
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border-radius:var(--radius);border:none;cursor:pointer;font-family:'DM Mono',monospace;font-size:12px;font-weight:500;transition:all .15s;white-space:nowrap;}
+.btn-primary{background:var(--accent);color:#000;}.btn-primary:hover{background:#d4ff50;}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);}.btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
+.btn-danger{background:transparent;color:var(--danger);border:1px solid var(--danger);}.btn-danger:hover{background:var(--danger);color:#fff;}
+.btn-sm{padding:5px 9px;font-size:11px;}.btn-icon{padding:5px 8px;}
+
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+.section-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;}
+.empty{text-align:center;padding:32px 16px;color:var(--muted2);}
+.empty-icon{font-size:30px;margin-bottom:8px;}
+.empty p{font-size:12px;}
+.divider{height:1px;background:var(--border);margin:12px 0;}
+
+/* Tarjeta de registro de venta */
+.reg-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:8px;cursor:pointer;transition:all .15s;}
+.reg-card:hover{border-color:var(--accent);}
+.reg-card-header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px;}
+.reg-card-nombre{font-size:13px;font-weight:500;}
+.reg-card-razon{font-size:10px;color:var(--accent2);}
+.reg-card-meta{font-size:10px;color:var(--muted2);line-height:1.7;}
+.reg-card-notas{font-size:11px;color:var(--warn);font-style:italic;margin-top:6px;padding-top:6px;border-top:1px solid var(--border);}
+
+/* Alerta de prueba vencida */
+.prueba-vencida{border-color:var(--danger)!important;background:rgba(240,74,74,.05)!important;}
+.prueba-por-vencer{border-color:var(--warn)!important;background:rgba(240,184,74,.05)!important;}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;align-items:center;justify-content:center;padding:14px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.modal-title{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;}
+.modal-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;line-height:1;padding:2px 6px;border-radius:4px;}
+.modal-close:hover{color:var(--text);}
+
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;}
+.form-group{display:flex;flex-direction:column;gap:4px;}
+.form-group label{font-size:10px;color:var(--muted2);text-transform:uppercase;letter-spacing:.6px;}
+.form-group input,.form-group select,.form-group textarea{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Mono',monospace;font-size:13px;padding:8px 10px;width:100%;}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--accent);}
+.form-group select option{background:var(--surface);}
+.form-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+
+/* Selector de estado como botones */
+.estado-selector{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:12px;}
+.estado-btn{padding:10px 8px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface2);cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;text-align:center;transition:all .15s;color:var(--muted2);}
+.estado-btn:hover{border-color:var(--accent2);color:var(--text);}
+.estado-btn.sel-conversacion{border-color:var(--warn);background:rgba(240,184,74,.1);color:var(--warn);}
+.estado-btn.sel-prueba{border-color:var(--accent2);background:rgba(74,240,200,.1);color:var(--accent2);}
+.estado-btn.sel-venta-realizada{border-color:var(--accent);background:rgba(200,240,74,.1);color:var(--accent);}
+.estado-btn.sel-venta-no-realizada{border-color:var(--danger);background:rgba(240,74,74,.1);color:var(--danger);}
+
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:500;white-space:nowrap;}
+.badge-green{background:rgba(200,240,74,.12);color:var(--accent);border:1px solid rgba(200,240,74,.25);}
+.badge-red{background:rgba(240,74,74,.12);color:var(--danger);border:1px solid rgba(240,74,74,.25);}
+.badge-yellow{background:rgba(240,184,74,.12);color:var(--warn);border:1px solid rgba(240,184,74,.25);}
+.badge-blue{background:rgba(74,240,200,.12);color:var(--accent2);border:1px solid rgba(74,240,200,.25);}
+
+@media(max-width:500px){.stats{grid-template-columns:repeat(2,1fr);}.form-grid{grid-template-columns:1fr;}.estado-selector{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading-screen">
+  <div class="loading-logo">Aroma<span>Gest</span></div>
+  <div style="font-size:11px;color:var(--accent2);margin-top:-8px;font-family:'DM Mono',monospace;">Ventas</div>
+  <div class="loading-bar"><div class="loading-bar-inner"></div></div>
+  <div class="loading-text" id="loading-text">Conectando...</div>
+</div>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">Aroma<span>Gest</span></div>
+    <div class="login-sub">App de Ventas — Ingresá tus credenciales</div>
+    <div class="login-field">
+      <label>Usuario</label>
+      <input type="text" id="login-user" placeholder="Usuario" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('login-pwd').focus()">
+    </div>
+    <div class="login-field">
+      <label>Contraseña</label>
+      <div class="login-pwd-row">
+        <input type="password" id="login-pwd" placeholder="Contraseña" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+        <button class="login-pwd-toggle" onclick="togglePwd()" id="pwd-toggle">👁</button>
+      </div>
+    </div>
+    <div class="login-error" id="login-error"></div>
+    <button class="btn btn-primary" style="width:100%;margin-top:14px;" onclick="doLogin()">Entrar</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+<header>
+  <div>
+    <div class="logo">Aroma<span>Gest</span></div>
+    <div class="logo-sub">Ventas</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <div class="user-chip" id="user-chip">—</div>
+    <button class="btn-logout" onclick="logout()">salir</button>
+  </div>
+</header>
+<nav>
+  <button class="active" onclick="showView('dashboard',this)">Dashboard</button>
+  <button onclick="showView('conversacion',this)">En conversación</button>
+  <button onclick="showView('prueba',this)">A prueba</button>
+  <button onclick="showView('venta-realizada',this)">Venta realizada</button>
+  <button onclick="showView('venta-no-realizada',this)">No realizada</button>
+  <button onclick="showView('revision',this)">Revisión</button>
+</nav>
+<main>
+
+<!-- DASHBOARD -->
+<div id="view-dashboard" class="view active">
+  <div class="section-title" style="margin-bottom:14px;">Mi actividad</div>
+  <div class="stats" id="dash-stats"></div>
+  <div class="panel">
+    <div class="panel-title">Próximas alertas de prueba</div>
+    <div id="dash-alertas-prueba"></div>
+  </div>
+</div>
+
+<!-- EN CONVERSACIÓN -->
+<div id="view-conversacion" class="view">
+  <div class="section-header">
+    <div class="section-title">En conversación</div>
+    <button class="btn btn-primary" onclick="openModal()">+ Agregar</button>
+  </div>
+  <div id="lista-conversacion"></div>
+</div>
+
+<!-- A PRUEBA -->
+<div id="view-prueba" class="view">
+  <div class="section-header">
+    <div class="section-title">A prueba</div>
+  </div>
+  <div id="lista-prueba"></div>
+</div>
+
+<!-- VENTA REALIZADA -->
+<div id="view-venta-realizada" class="view">
+  <div class="section-header">
+    <div class="section-title">Venta realizada</div>
+  </div>
+  <div id="lista-venta-realizada"></div>
+</div>
+
+<!-- VENTA NO REALIZADA -->
+<div id="view-venta-no-realizada" class="view">
+  <div class="section-header">
+    <div class="section-title">Venta no realizada</div>
+  </div>
+  <div id="lista-venta-no-realizada"></div>
+</div>
+
+<!-- REVISIÓN -->
+<div id="view-revision" class="view">
+  <div class="section-header">
+    <div class="section-title">Revisión — potenciales futuros</div>
+  </div>
+  <div id="lista-revision"></div>
+</div>
+
+</main>
+</div>
+
+<!-- MODAL REGISTRO -->
+<div class="modal-overlay" id="modal-reg">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-titulo">Nuevo registro</div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label>Nombre y apellido</label><input type="text" id="r-nombre"></div>
+      <div class="form-group"><label>Razón social</label><input type="text" id="r-razon"></div>
+      <div class="form-group"><label>Dirección</label><input type="text" id="r-direccion"></div>
+      <div class="form-group"><label>Teléfono</label><input type="text" id="r-telefono"></div>
+      <div class="form-group"><label>Correo electrónico</label><input type="email" id="r-email"></div>
+    </div>
+    <!-- Campos de prueba (visibles cuando estado = prueba) -->
+    <div id="wrap-prueba" style="display:none;margin-top:10px;">
+      <div class="divider"></div>
+      <div style="font-size:10px;color:var(--muted2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">Período de prueba</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Fecha inicio de prueba</label><input type="date" id="r-fecha-inicio"></div>
+        <div class="form-group"><label>Fecha fin de prueba</label><input type="date" id="r-fecha-fin"></div>
+      </div>
+    </div>
+    <!-- Campos de venta realizada -->
+    <div id="wrap-venta" style="display:none;margin-top:10px;">
+      <div class="divider"></div>
+      <div style="font-size:10px;color:var(--muted2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">Venta</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Fecha de venta</label><input type="date" id="r-fecha-venta"></div>
+        <div class="form-group"><label>Número de contrato</label><input type="text" id="r-contrato" placeholder="Ej: 042"></div>
+        <div class="form-group"><label>Zona asignada</label><input type="text" id="r-zona" placeholder="Ej: 1-3"></div>
+        <div class="form-group"><label>Comisión</label>
+          <select id="r-comision">
+            <option value="no">Pendiente de pago</option>
+            <option value="si">Pagada</option>
+          </select>
+        </div>
+      </div>
+      <div id="wrap-confirmar-sistema" style="margin-top:10px;padding:10px;background:rgba(200,240,74,.06);border:1px solid rgba(200,240,74,.2);border-radius:var(--radius);font-size:11px;color:var(--accent);">
+        ✓ Al marcar comisión como pagada el sistema sugerirá eliminar este registro, confirmando que el cliente fue agregado al sistema principal.
+      </div>
+    </div>
+    <!-- Selector de estado -->
+    <div style="margin-top:12px;">
+      <div style="font-size:10px;color:var(--muted2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">Estado</div>
+      <div class="estado-selector">
+        <button class="estado-btn" id="btn-conversacion" onclick="setEstado('conversacion')">💬 En conversación</button>
+        <button class="estado-btn" id="btn-prueba" onclick="setEstado('prueba')">🧪 Prueba realizada</button>
+        <button class="estado-btn" id="btn-venta-realizada" onclick="setEstado('venta-realizada')">✅ Venta realizada</button>
+        <button class="estado-btn" id="btn-venta-no-realizada" onclick="setEstado('venta-no-realizada')">❌ Venta no realizada</button>
+      </div>
+    </div>
+    <!-- Notas -->
+    <div class="form-group" style="margin-top:12px;">
+      <label>Notas / Ayuda memoria</label>
+      <textarea id="r-notas" rows="3" placeholder="Observaciones, próximos pasos, acuerdos..." style="resize:vertical;"></textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="guardarRegistro()">Guardar</button>
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-danger btn-sm" id="btn-eliminar-reg" style="margin-left:auto;display:none;" onclick="eliminarRegistro()">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- FIREBASE SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// ── Misma configuración Firebase que AromaGest ──
+const firebaseConfig = {
+  apiKey: "AIzaSyCcSmveJhzhqlZjLviFaavg77UhTFc94E8",
+  authDomain: "aromagest-d45cb.firebaseapp.com",
+  projectId: "aromagest-d45cb",
+  storageBucket: "aromagest-d45cb.firebasestorage.app",
+  messagingSenderId: "666071845134",
+  appId: "1:666071845134:web:c399e7bb0281bf1eabaf5f"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+// Mismo documento que AromaGest — compartimos la base de datos
+const DATA_DOC = doc(db, 'aromagest', 'data');
+
+// Estado local de la app de ventas
+window.SV = {
+  empleados: [],       // Cargado desde Firebase (para login)
+  vendedoresData: [],  // Registros de ventas de todos los vendedores
+  config: {},
+};
+
+// Guardar cambios en Firebase
+window.saveVentas = async function(){
+  try {
+    // Solo actualizar el campo vendedoresData — no tocar el resto
+    await setDoc(DATA_DOC, { vendedoresData: window.SV.vendedoresData }, { merge: true });
+  } catch(e){
+    console.error('Error al guardar:', e);
+  }
+};
+
+// Inicializar: cargar datos y mostrar login
+async function initData(){
+  document.getElementById('loading-text').textContent = 'Cargando...';
+  try {
+    const snap = await getDoc(DATA_DOC);
+    if(snap.exists()){
+      const data = snap.data();
+      window.SV.empleados = data.empleados || [];
+      window.SV.vendedoresData = data.vendedoresData || [];
+      window.SV.config = data.config || {};
+    }
+    // Suscripción en tiempo real para sync
+    onSnapshot(DATA_DOC, (snap)=>{
+      if(!snap.exists() || !window.currentVendedor) return;
+      const data = snap.data();
+      window.SV.empleados = data.empleados || [];
+      window.SV.vendedoresData = data.vendedoresData || [];
+      if(window.currentVendedor) renderAll();
+    });
+    document.getElementById('loading-screen').style.display='none';
+    document.getElementById('login-screen').style.display='flex';
+    setTimeout(()=>document.getElementById('login-user').focus(), 100);
+  } catch(e){
+    document.getElementById('loading-text').textContent = 'Error de conexión. Verificá tu internet.';
+  }
+}
+initData();
+</script>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// ESTADO LOCAL
+// ═══════════════════════════════════════════════════════════════
+let currentVendedor = null; // { id, nombre, usuario }
+let editingRegId = null;
+let estadoActual = 'conversacion';
+
+// ═══════════════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════════════
+function hoy(){
+  const d=new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+
+/** Retorna los registros del vendedor actual */
+function misRegistros(){ return (SV.vendedoresData||[]).filter(r=>r.vendedorId===currentVendedor?.id); }
+
+/** Retorna los registros del vendedor filtrados por estado */
+function registrosPorEstado(estado){ return misRegistros().filter(r=>r.estado===estado); }
+
+/** Calcula los días restantes de una prueba */
+function diasRestantesPrueba(fechaFin){
+  if(!fechaFin) return null;
+  const hoyMs = new Date().setHours(0,0,0,0);
+  const finMs = new Date(fechaFin).setHours(0,0,0,0);
+  return Math.ceil((finMs - hoyMs) / (1000*60*60*24));
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LOGIN
+// ═══════════════════════════════════════════════════════════════
+function togglePwd(){
+  const inp = document.getElementById('login-pwd');
+  const btn = document.getElementById('pwd-toggle');
+  inp.type = inp.type==='password' ? 'text' : 'password';
+  btn.textContent = inp.type==='password' ? '👁' : '🙈';
+}
+
+function doLogin(){
+  const usuario = document.getElementById('login-user').value.trim();
+  const pwd = document.getElementById('login-pwd').value;
+  document.getElementById('login-error').textContent='';
+  if(!usuario||!pwd){ document.getElementById('login-error').textContent='Completá usuario y contraseña'; return; }
+
+  // Buscar vendedor por usuario y contraseña
+  const vendedor = (SV.empleados||[]).find(e=>
+    e.tipo==='vendedor' &&
+    e.usuario && e.usuario.toLowerCase()===usuario.toLowerCase() &&
+    e.pwd===pwd
+  );
+
+  // También permitir acceso con credenciales de admin
+  const esAdmin = usuario.toLowerCase()===(SV.config?.usuarioAdmin||'admin').toLowerCase() && pwd===SV.config?.pwdAdmin;
+
+  if(vendedor){
+    currentVendedor = { id: vendedor.id, nombre: `${vendedor.nombre} ${vendedor.apellido||''}`.trim(), usuario: vendedor.usuario, esAdmin: false };
+  } else if(esAdmin){
+    // El admin entra con vista de todos los registros (sin filtro de vendedor)
+    currentVendedor = { id: 'admin', nombre: SV.config?.negocio||'Admin', usuario: usuario, esAdmin: true };
+  } else {
+    document.getElementById('login-error').textContent='Usuario o contraseña incorrectos';
+    return;
+  }
+  enterApp();
+}
+
+function enterApp(){
+  document.getElementById('login-screen').style.display='none';
+  const app = document.getElementById('app');
+  app.style.display='flex'; app.style.flexDirection='column';
+  document.getElementById('user-chip').textContent = currentVendedor.nombre;
+  renderAll();
+}
+
+function logout(){
+  currentVendedor=null;
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('login-user').value='';
+  document.getElementById('login-pwd').value='';
+  document.getElementById('login-error').textContent='';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NAVEGACIÓN
+// ═══════════════════════════════════════════════════════════════
+function showView(v, btn){
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(el=>el.classList.remove('active'));
+  document.getElementById('view-'+v)?.classList.add('active');
+  if(btn) btn.classList.add('active');
+  renderVista(v);
+}
+
+function renderAll(){
+  renderDashboard();
+  renderVista('conversacion');
+  renderVista('prueba');
+  renderVista('venta-realizada');
+  renderVista('venta-no-realizada');
+  renderVista('revision');
+}
+
+function renderVista(estado){
+  const contenedores = {
+    'conversacion': 'lista-conversacion',
+    'prueba': 'lista-prueba',
+    'venta-realizada': 'lista-venta-realizada',
+    'venta-no-realizada': 'lista-venta-no-realizada',
+    'revision': 'lista-revision',
+  };
+  const divId = contenedores[estado];
+  if(!divId) return;
+  const div = document.getElementById(divId);
+  const lista = registrosPorEstado(estado);
+  if(!lista.length){
+    div.innerHTML='<div class="empty"><div class="empty-icon">📋</div><p>Sin registros en esta etapa</p></div>';
+    return;
+  }
+  div.innerHTML = lista.map(r=>{
+    const dias = r.estado==='prueba' ? diasRestantesPrueba(r.fechaFin) : null;
+    let cardClass = 'reg-card';
+    let alertaHtml = '';
+    if(dias !== null){
+      if(dias < 0){ cardClass += ' prueba-vencida'; alertaHtml=`<span class="badge badge-red">⚠ Prueba vencida hace ${Math.abs(dias)} día(s)</span>`; }
+      else if(dias <= 3){ cardClass += ' prueba-por-vencer'; alertaHtml=`<span class="badge badge-yellow">⚠ Vence en ${dias} día(s)</span>`; }
+      else { alertaHtml=`<span class="badge badge-blue">Vence en ${dias} día(s)</span>`; }
+    }
+    return `<div class="${cardClass}" onclick="openModal('${r.id}')">
+      <div class="reg-card-header">
+        <div>
+          <div class="reg-card-nombre">${r.nombreApellido||'—'}</div>
+          ${r.razonSocial?`<div class="reg-card-razon">${r.razonSocial}</div>`:''}
+        </div>
+        ${r.estado==='venta-realizada'?`<span class="badge ${r.comisionPagada?'badge-green':'badge-yellow'}">${r.comisionPagada?'Comisión pagada':'Comisión pendiente'}</span>`:''}
+        ${alertaHtml}
+      </div>
+      <div class="reg-card-meta">
+        ${r.telefono?`📞 ${r.telefono}<br>`:''}
+        ${r.email?`✉ ${r.email}<br>`:''}
+        ${r.direccion?`📍 ${r.direccion}<br>`:''}
+        ${r.estado==='prueba'&&r.fechaInicio?`Inicio prueba: ${r.fechaInicio}`:''}
+        ${r.estado==='venta-realizada'&&r.fechaVenta?`Venta: ${r.fechaVenta} · Contrato: ${r.contrato||'—'} · Zona: ${r.zona||'—'}`:''}
+      </div>
+      ${r.notas?`<div class="reg-card-notas">📝 ${r.notas}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════════════
+function renderDashboard(){
+  const todos = misRegistros();
+  const enConv = todos.filter(r=>r.estado==='conversacion').length;
+  const prueba = todos.filter(r=>r.estado==='prueba').length;
+  const realizada = todos.filter(r=>r.estado==='venta-realizada').length;
+  const noRealizada = todos.filter(r=>r.estado==='venta-no-realizada').length;
+  const revision = todos.filter(r=>r.estado==='revision').length;
+  const comPendiente = todos.filter(r=>r.estado==='venta-realizada'&&!r.comisionPagada).length;
+
+  document.getElementById('dash-stats').innerHTML=`
+    <div class="stat"><div class="stat-val c-yellow">${enConv}</div><div class="stat-label">En conversación</div></div>
+    <div class="stat"><div class="stat-val c-blue">${prueba}</div><div class="stat-label">A prueba</div></div>
+    <div class="stat"><div class="stat-val c-green">${realizada}</div><div class="stat-label">Ventas realizadas</div></div>
+    <div class="stat"><div class="stat-val c-red">${noRealizada}</div><div class="stat-label">No realizadas</div></div>
+    <div class="stat"><div class="stat-val c-yellow">${comPendiente}</div><div class="stat-label">Comisiones pend.</div></div>
+    <div class="stat"><div class="stat-val" style="color:#4a8af0;">${revision}</div><div class="stat-label">En revisión</div></div>`;
+
+  // Alertas de pruebas próximas a vencer o vencidas
+  const enPrueba = misRegistros().filter(r=>r.estado==='prueba');
+  const alertas = enPrueba.map(r=>{
+    const dias = diasRestantesPrueba(r.fechaFin);
+    return { r, dias };
+  }).filter(a=>a.dias !== null && a.dias <= 5).sort((a,b)=>a.dias-b.dias);
+
+  const divAlertas = document.getElementById('dash-alertas-prueba');
+  if(!alertas.length){
+    divAlertas.innerHTML='<div class="empty" style="padding:16px;"><p>Sin pruebas próximas a vencer</p></div>';
+  } else {
+    divAlertas.innerHTML = alertas.map(({r,dias})=>`
+      <div class="reg-card ${dias<0?'prueba-vencida':dias<=2?'prueba-por-vencer':''}" onclick="openModal('${r.id}')">
+        <div class="reg-card-header">
+          <div>
+            <div class="reg-card-nombre">${r.nombreApellido||r.razonSocial||'—'}</div>
+            <div class="reg-card-meta">Fin de prueba: ${r.fechaFin||'—'}</div>
+          </div>
+          <span class="badge ${dias<0?'badge-red':dias<=2?'badge-yellow':'badge-blue'}">
+            ${dias<0?`Vencida hace ${Math.abs(dias)}d`:dias===0?'Vence hoy':`Vence en ${dias}d`}
+          </span>
+        </div>
+      </div>`).join('');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MODAL DE REGISTRO
+// ═══════════════════════════════════════════════════════════════
+function openModal(id){
+  editingRegId = id||null;
+  if(id){
+    const r = misRegistros().find(r=>r.id===id);
+    if(!r) return;
+    document.getElementById('modal-titulo').textContent='Editar registro';
+    document.getElementById('r-nombre').value=r.nombreApellido||'';
+    document.getElementById('r-razon').value=r.razonSocial||'';
+    document.getElementById('r-direccion').value=r.direccion||'';
+    document.getElementById('r-telefono').value=r.telefono||'';
+    document.getElementById('r-email').value=r.email||'';
+    document.getElementById('r-fecha-inicio').value=r.fechaInicio||'';
+    document.getElementById('r-fecha-fin').value=r.fechaFin||'';
+    document.getElementById('r-fecha-venta').value=r.fechaVenta||'';
+    document.getElementById('r-contrato').value=r.contrato||'';
+    document.getElementById('r-zona').value=r.zona||'';
+    document.getElementById('r-comision').value=r.comisionPagada?'si':'no';
+    document.getElementById('r-notas').value=r.notas||'';
+    document.getElementById('btn-eliminar-reg').style.display='inline-flex';
+    setEstado(r.estado||'conversacion');
+  } else {
+    document.getElementById('modal-titulo').textContent='Nuevo registro';
+    ['r-nombre','r-razon','r-direccion','r-telefono','r-email','r-fecha-inicio','r-fecha-fin','r-fecha-venta','r-contrato','r-zona','r-notas'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('r-comision').value='no';
+    document.getElementById('btn-eliminar-reg').style.display='none';
+    setEstado('conversacion');
+  }
+  document.getElementById('modal-reg').classList.add('open');
+}
+
+/** Selecciona el estado del registro y muestra los campos correspondientes */
+function setEstado(estado){
+  estadoActual = estado;
+  // Limpiar selección anterior
+  document.querySelectorAll('.estado-btn').forEach(b=>b.className='estado-btn');
+  // Marcar seleccionado
+  const btn = document.getElementById('btn-'+estado);
+  if(btn) btn.classList.add('sel-'+estado);
+  // Mostrar/ocultar campos según estado
+  document.getElementById('wrap-prueba').style.display = estado==='prueba'?'block':'none';
+  document.getElementById('wrap-venta').style.display = estado==='venta-realizada'?'block':'none';
+}
+
+function closeModal(){ document.getElementById('modal-reg').classList.remove('open'); }
+document.getElementById('modal-reg').addEventListener('click', e=>{ if(e.target===document.getElementById('modal-reg')) closeModal(); });
+
+/** Guarda o actualiza un registro */
+async function guardarRegistro(){
+  const nombre = document.getElementById('r-nombre').value.trim();
+  const razon = document.getElementById('r-razon').value.trim();
+  if(!nombre && !razon){ alert('Completá al menos el nombre o razón social'); return; }
+
+  const comisionPagada = document.getElementById('r-comision').value === 'si';
+
+  const data = {
+    vendedorId: currentVendedor.id,
+    nombreApellido: nombre,
+    razonSocial: razon,
+    direccion: document.getElementById('r-direccion').value.trim(),
+    telefono: document.getElementById('r-telefono').value.trim(),
+    email: document.getElementById('r-email').value.trim(),
+    estado: estadoActual,
+    notas: document.getElementById('r-notas').value.trim(),
+    fechaInicio: document.getElementById('r-fecha-inicio').value||null,
+    fechaFin: document.getElementById('r-fecha-fin').value||null,
+    fechaVenta: document.getElementById('r-fecha-venta').value||null,
+    contrato: document.getElementById('r-contrato').value.trim(),
+    zona: document.getElementById('r-zona').value.trim(),
+    comisionPagada,
+  };
+
+  if(!SV.vendedoresData) SV.vendedoresData=[];
+
+  if(editingRegId){
+    const idx = SV.vendedoresData.findIndex(r=>r.id===editingRegId);
+    SV.vendedoresData[idx] = {...SV.vendedoresData[idx],...data};
+    // Si comisión pagada, sugerir eliminar
+    if(comisionPagada && estadoActual==='venta-realizada'){
+      closeModal();
+      await saveVentas();
+      renderAll();
+      if(confirm(`¿Confirmar que ${nombre||razon} fue agregado al sistema principal con su contrato y zona? Si es así, podés eliminar este registro.`)){
+        if(confirm('¿Eliminar definitivamente este registro?')){
+          SV.vendedoresData = SV.vendedoresData.filter(r=>r.id!==editingRegId);
+          await saveVentas();
+          renderAll();
+        }
+      }
+      return;
+    }
+  } else {
+    data.fechaCreacion = hoy();
+    SV.vendedoresData.push({id:uid(),...data});
+  }
+
+  await saveVentas();
+  closeModal();
+  renderAll();
+}
+
+/** Elimina un registro */
+async function eliminarRegistro(){
+  const r = SV.vendedoresData.find(r=>r.id===editingRegId);
+  if(!r) return;
+
+  // Si es venta no realizada, preguntar si va a revisión o se elimina
+  if(r.estado==='venta-no-realizada'){
+    const opcion = confirm('¿Mover a "Revisión" para un reintento futuro?\n(Cancelar para eliminar definitivamente)');
+    if(opcion){
+      const idx = SV.vendedoresData.findIndex(r=>r.id===editingRegId);
+      SV.vendedoresData[idx].estado = 'revision';
+      await saveVentas();
+      closeModal();
+      renderAll();
+      return;
+    }
+  }
+
+  if(!confirm('¿Eliminar definitivamente este registro?')) return;
+  SV.vendedoresData = SV.vendedoresData.filter(r=>r.id!==editingRegId);
+  await saveVentas();
+  closeModal();
+  renderAll();
+}
+</script>
+</body>
+</html>
