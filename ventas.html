@@ -175,6 +175,13 @@ main{padding:14px 16px;width:100%;max-width:100%;}
     <button class="btn-logout" onclick="logout()">salir</button>
   </div>
 </header>
+<!-- Filtro de vendedor — solo visible para admin -->
+<div id="admin-filtro-wrap" style="display:none;background:var(--surface);border-bottom:1px solid var(--border);padding:8px 16px;">
+  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+    <span style="font-size:10px;color:var(--muted2);text-transform:uppercase;letter-spacing:.6px;">Ver:</span>
+    <div id="admin-vendedor-filtro" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+  </div>
+</div>
 <nav>
   <button class="active" onclick="showView('dashboard',this)">Dashboard</button>
   <button onclick="showView('conversacion',this)">En conversación</button>
@@ -252,6 +259,11 @@ main{padding:14px 16px;width:100%;max-width:100%;}
       <div class="form-group"><label>Dirección</label><input type="text" id="r-direccion"></div>
       <div class="form-group"><label>Teléfono</label><input type="text" id="r-telefono"></div>
       <div class="form-group"><label>Correo electrónico</label><input type="email" id="r-email"></div>
+      <!-- Selector de vendedor — solo visible para admin -->
+      <div class="form-group" id="wrap-vendedor-selector" style="display:none;">
+        <label>Asignar a vendedor</label>
+        <select id="r-vendedor"><option value="">Sin asignar</option></select>
+      </div>
     </div>
     <!-- Campos de prueba (visibles cuando estado = prueba) -->
     <div id="wrap-prueba" style="display:none;margin-top:10px;">
@@ -374,9 +386,10 @@ initData();
 // ═══════════════════════════════════════════════════════════════
 // ESTADO LOCAL
 // ═══════════════════════════════════════════════════════════════
-let currentVendedor = null; // { id, nombre, usuario }
+let currentVendedor = null; // { id, nombre, usuario, esAdmin }
 let editingRegId = null;
 let estadoActual = 'conversacion';
+let filtroVendedorAdmin = 'todos'; // Solo usado cuando es admin
 
 // ═══════════════════════════════════════════════════════════════
 // UTILS
@@ -387,11 +400,26 @@ function hoy(){
 }
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
 
-/** Retorna los registros del vendedor actual */
-function misRegistros(){ return (SV.vendedoresData||[]).filter(r=>r.vendedorId===currentVendedor?.id); }
+/** Retorna los registros visibles según el usuario actual */
+function misRegistros(){
+  if(!currentVendedor) return [];
+  if(currentVendedor.esAdmin){
+    // Admin: todos los registros, filtrados por vendedor si hay filtro activo
+    if(filtroVendedorAdmin === 'todos') return SV.vendedoresData||[];
+    return (SV.vendedoresData||[]).filter(r=>r.vendedorId===filtroVendedorAdmin);
+  }
+  // Vendedor: solo los suyos
+  return (SV.vendedoresData||[]).filter(r=>r.vendedorId===currentVendedor.id);
+}
 
-/** Retorna los registros del vendedor filtrados por estado */
+/** Retorna los registros filtrados por estado */
 function registrosPorEstado(estado){ return misRegistros().filter(r=>r.estado===estado); }
+
+/** Retorna el nombre de un vendedor por su ID */
+function nombreVendedor(id){
+  const v = (SV.empleados||[]).find(e=>e.id===id);
+  return v ? `${v.nombre} ${v.apellido||''}`.trim() : '—';
+}
 
 /** Calcula los días restantes de una prueba */
 function diasRestantesPrueba(fechaFin){
@@ -444,6 +472,13 @@ function enterApp(){
   const app = document.getElementById('app');
   app.style.display='flex'; app.style.flexDirection='column';
   document.getElementById('user-chip').textContent = currentVendedor.nombre;
+
+  // Si es admin, mostrar el filtro de vendedores
+  if(currentVendedor.esAdmin){
+    const wrap = document.getElementById('admin-filtro-wrap');
+    wrap.style.display='block';
+    renderFiltroAdmin();
+  }
   renderAll();
 }
 
@@ -476,6 +511,25 @@ function renderAll(){
   renderVista('revision');
 }
 
+/** Renderiza los botones de filtro de vendedor para el admin */
+function renderFiltroAdmin(){
+  const vendedores = (SV.empleados||[]).filter(e=>e.tipo==='vendedor');
+  const div = document.getElementById('admin-vendedor-filtro');
+  div.innerHTML =
+    `<button class="btn btn-sm ${filtroVendedorAdmin==='todos'?'btn-primary':'btn-secondary'}" onclick="setFiltroAdmin('todos')">Todos</button>` +
+    vendedores.map(v=>`
+      <button class="btn btn-sm ${filtroVendedorAdmin===v.id?'btn-primary':'btn-secondary'}" onclick="setFiltroAdmin('${v.id}')">
+        ${v.nombre} ${v.apellido||''}
+      </button>`).join('');
+}
+
+/** Cambia el filtro de vendedor activo (solo admin) */
+function setFiltroAdmin(id){
+  filtroVendedorAdmin = id;
+  renderFiltroAdmin();
+  renderAll();
+}
+
 function renderVista(estado){
   const contenedores = {
     'conversacion': 'lista-conversacion',
@@ -506,9 +560,12 @@ function renderVista(estado){
         <div>
           <div class="reg-card-nombre">${r.nombreApellido||'—'}</div>
           ${r.razonSocial?`<div class="reg-card-razon">${r.razonSocial}</div>`:''}
+          ${currentVendedor.esAdmin?`<div style="font-size:10px;color:#4a8af0;margin-top:2px;">👤 ${nombreVendedor(r.vendedorId)}</div>`:''}
         </div>
-        ${r.estado==='venta-realizada'?`<span class="badge ${r.comisionPagada?'badge-green':'badge-yellow'}">${r.comisionPagada?'Comisión pagada':'Comisión pendiente'}</span>`:''}
-        ${alertaHtml}
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+          ${r.estado==='venta-realizada'?`<span class="badge ${r.comisionPagada?'badge-green':'badge-yellow'}">${r.comisionPagada?'Comisión pagada':'Comisión pendiente'}</span>`:''}
+          ${alertaHtml}
+        </div>
       </div>
       <div class="reg-card-meta">
         ${r.telefono?`📞 ${r.telefono}<br>`:''}
@@ -573,8 +630,22 @@ function renderDashboard(){
 // ═══════════════════════════════════════════════════════════════
 function openModal(id){
   editingRegId = id||null;
+
+  // Poblar selector de vendedor (solo para admin)
+  const wrapVend = document.getElementById('wrap-vendedor-selector');
+  const selVend = document.getElementById('r-vendedor');
+  if(currentVendedor.esAdmin){
+    wrapVend.style.display='';
+    const vendedores = (SV.empleados||[]).filter(e=>e.tipo==='vendedor');
+    selVend.innerHTML = '<option value="">Sin asignar</option>' +
+      vendedores.map(v=>`<option value="${v.id}">${v.nombre} ${v.apellido||''}</option>`).join('');
+  } else {
+    wrapVend.style.display='none';
+  }
+
   if(id){
-    const r = misRegistros().find(r=>r.id===id);
+    // Buscar en todos los registros (no solo los del vendedor actual) para que admin pueda editar cualquiera
+    const r = (SV.vendedoresData||[]).find(r=>r.id===id);
     if(!r) return;
     document.getElementById('modal-titulo').textContent='Editar registro';
     document.getElementById('r-nombre').value=r.nombreApellido||'';
@@ -589,12 +660,16 @@ function openModal(id){
     document.getElementById('r-zona').value=r.zona||'';
     document.getElementById('r-comision').value=r.comisionPagada?'si':'no';
     document.getElementById('r-notas').value=r.notas||'';
+    if(currentVendedor.esAdmin) selVend.value=r.vendedorId||'';
     document.getElementById('btn-eliminar-reg').style.display='inline-flex';
     setEstado(r.estado||'conversacion');
   } else {
     document.getElementById('modal-titulo').textContent='Nuevo registro';
     ['r-nombre','r-razon','r-direccion','r-telefono','r-email','r-fecha-inicio','r-fecha-fin','r-fecha-venta','r-contrato','r-zona','r-notas'].forEach(i=>document.getElementById(i).value='');
     document.getElementById('r-comision').value='no';
+    // Si admin tiene filtro activo, preseleccionar ese vendedor
+    if(currentVendedor.esAdmin && filtroVendedorAdmin!=='todos') selVend.value=filtroVendedorAdmin;
+    else if(currentVendedor.esAdmin) selVend.value='';
     document.getElementById('btn-eliminar-reg').style.display='none';
     setEstado('conversacion');
   }
@@ -604,12 +679,9 @@ function openModal(id){
 /** Selecciona el estado del registro y muestra los campos correspondientes */
 function setEstado(estado){
   estadoActual = estado;
-  // Limpiar selección anterior
   document.querySelectorAll('.estado-btn').forEach(b=>b.className='estado-btn');
-  // Marcar seleccionado
   const btn = document.getElementById('btn-'+estado);
   if(btn) btn.classList.add('sel-'+estado);
-  // Mostrar/ocultar campos según estado
   document.getElementById('wrap-prueba').style.display = estado==='prueba'?'block':'none';
   document.getElementById('wrap-venta').style.display = estado==='venta-realizada'?'block':'none';
 }
@@ -625,8 +697,13 @@ async function guardarRegistro(){
 
   const comisionPagada = document.getElementById('r-comision').value === 'si';
 
+  // Determinar el vendedorId: si es admin usa el selector, si es vendedor usa el suyo
+  const vendedorId = currentVendedor.esAdmin
+    ? (document.getElementById('r-vendedor').value || 'admin')
+    : currentVendedor.id;
+
   const data = {
-    vendedorId: currentVendedor.id,
+    vendedorId,
     nombreApellido: nombre,
     razonSocial: razon,
     direccion: document.getElementById('r-direccion').value.trim(),
