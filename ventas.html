@@ -338,25 +338,26 @@ const DATA_DOC = doc(db, 'aromagest', 'data');
 
 // Estado local de la app de ventas
 window.SV = {
-  empleados: [],       // Cargado desde Firebase (para login)
-  vendedoresData: [],  // Registros de ventas de todos los vendedores
+  empleados: [],
+  vendedoresData: [],
   config: {},
 };
 
-// Guardar cambios en Firebase
+// ─── Guardar solo el campo vendedoresData en Firebase ───
+// Usa merge:true para no tocar ningún otro campo del documento
 window.saveVentas = async function(){
   try {
-    // Solo actualizar el campo vendedoresData — no tocar el resto
     await setDoc(DATA_DOC, { vendedoresData: window.SV.vendedoresData }, { merge: true });
   } catch(e){
     console.error('Error al guardar:', e);
   }
 };
 
-// Inicializar: cargar datos y mostrar login
+// ─── Inicializar: cargar datos con getDoc y suscribir onSnapshot ───
 async function initData(){
   document.getElementById('loading-text').textContent = 'Cargando...';
   try {
+    // Lectura inicial única y confiable
     const snap = await getDoc(DATA_DOC);
     if(snap.exists()){
       const data = snap.data();
@@ -364,14 +365,24 @@ async function initData(){
       window.SV.vendedoresData = data.vendedoresData || [];
       window.SV.config = data.config || {};
     }
-    // Suscripción en tiempo real para sync
+
+    // Suscripción en tiempo real — SOLO actualiza si el usuario está logueado
+    // y NUNCA pisa vendedoresData con un array vacío
     onSnapshot(DATA_DOC, (snap)=>{
       if(!snap.exists() || !window.currentVendedor) return;
       const data = snap.data();
       window.SV.empleados = data.empleados || [];
-      window.SV.vendedoresData = data.vendedoresData || [];
-      if(window.currentVendedor) renderAll();
+      window.SV.config = data.config || {};
+      // Solo actualizar vendedoresData si el snapshot trae datos
+      // (evita pisar con array vacío si Firebase llega en mal momento)
+      if(data.vendedoresData && data.vendedoresData.length > 0){
+        window.SV.vendedoresData = data.vendedoresData;
+      } else if(!window.SV.vendedoresData || window.SV.vendedoresData.length === 0){
+        window.SV.vendedoresData = data.vendedoresData || [];
+      }
+      renderAll();
     });
+
     document.getElementById('loading-screen').style.display='none';
     document.getElementById('login-screen').style.display='flex';
     setTimeout(()=>document.getElementById('login-user').focus(), 100);
