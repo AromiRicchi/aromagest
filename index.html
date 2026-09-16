@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AromaGest</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0c0c0c;--surface:#161616;--border:#2c2c2c;
+  --accent:#c8f04a;--accent2:#4af0c8;--text:#e8e8e8;--muted2:#888;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;
+  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
+  background-image:radial-gradient(ellipse at 20% 50%,#1a2a0a 0%,transparent 55%),
+                   radial-gradient(ellipse at 80% 20%,#0a1a2a 0%,transparent 55%);
+}
+.container{width:100%;max-width:420px;}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:36px;text-align:center;margin-bottom:6px;}
+.logo span{color:var(--accent);}
+.tagline{text-align:center;color:var(--muted2);font-size:12px;margin-bottom:40px;letter-spacing:.5px;}
+.apps{display:flex;flex-direction:column;gap:12px;}
+.app-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:22px 24px;text-decoration:none;color:var(--text);
+  display:flex;align-items:center;gap:16px;transition:all .2s;
+}
+.app-card:hover{border-color:var(--accent);background:#1a1a1a;transform:translateY(-1px);}
+.app-card.ventas:hover{border-color:var(--accent2);}
+.app-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.app-icon.principal{background:rgba(200,240,74,.12);border:1px solid rgba(200,240,74,.2);}
+.app-icon.ventas{background:rgba(74,240,200,.12);border:1px solid rgba(74,240,200,.2);}
+.app-info{flex:1;}
+.app-name{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;margin-bottom:3px;}
+.app-name.principal{color:var(--accent);}
+.app-name.ventas{color:var(--accent2);}
+.app-desc{font-size:11px;color:var(--muted2);line-height:1.5;}
+.app-arrow{color:var(--muted2);font-size:18px;}
+.footer{text-align:center;margin-top:32px;font-size:10px;color:var(--muted2);letter-spacing:.5px;}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="logo">Aroma<span>Gest</span></div>
+  <div class="tagline">Sistema de gestión de fragancias</div>
+  <div class="apps">
+    <a href="aromagest-v15.html" class="app-card">
+      <div class="app-icon principal">🌿</div>
+      <div class="app-info">
+        <div class="app-name principal">AromaGest</div>
+        <div class="app-desc">Gestión principal — clientes, recargas, pagos, zonas y ventas</div>
+      </div>
+      <div class="app-arrow">→</div>
+    </a>
+    <a href="aromagest-ventas.html" class="app-card ventas">
+      <div class="app-icon ventas">🧑‍💼</div>
+      <div class="app-info">
+        <div class="app-name ventas">AromaGest Ventas</div>
+        <div class="app-desc">App de vendedores — seguimiento de clientes y pipeline de ventas</div>
+      </div>
+      <div class="app-arrow">→</div>
+    </a>
+  </div>
+  <div class="footer">AromaGest · Sistema privado de uso interno</div>
+</div>
+</body>
+</html>
